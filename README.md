@@ -1,5 +1,11 @@
+# Pixel River Financial Bank Application
+## Student: Vandana Bhangu
+## GitHub: [vandana0100](https://github.com/vandana0100)
+
 # Project Overview
 The Student Portfolio Microservice aims to provide a platform where students can showcase their projects, skills, and academic achievements. It's built with scalability and modularity in mind, allowing for independent development and deployment of the frontend and backend components.
+
+This banking microservice application demonstrates modern DevOps practices including Docker containerization, Kubernetes orchestration, CI/CD pipelines, and GitOps deployment strategies.
 
 ## Architecture
 **The application follows a simple microservice pattern:**
@@ -36,17 +42,23 @@ The Student Portfolio Microservice aims to provide a platform where students can
                                 | (Payment Processing)  |
                                 +-----------------------+
 ## Technologies Used
-    Frontend: [Specify your frontend framework/library, e.g., React, Angular, Vue.js, or just HTML/CSS/JS]
+    Frontend: HTML/CSS/JavaScript (Student Portfolio)
 
-    Backend: [Specify your backend language/framework, e.g., Node.js/Express, Python/Flask, Java/Spring Boot]
+    Backend: Python with Flask (Banking API)
 
-    Transactions: [Specify the technology for the new transactions microservice, e.g., a dedicated microservice using Stripe, PayPal, or another payment gateway.]
+    Transactions: Node.js with Express (Transactions Microservice)
 
     Database: MongoDB
 
     API Proxy/Web Server: Nginx
 
-    Containerization (Recommended): Docker, Docker Compose (for local development)
+    Containerization: Docker, Docker Compose (for local development)
+
+    Orchestration: Kubernetes (Minikube for local, EKS for cloud)
+
+    CI/CD: GitHub Actions
+
+    GitOps: ArgoCD
 
 
 

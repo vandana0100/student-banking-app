@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
       - name: studentportfolio
-        image: studentportfolio:latest
-        imagePullPolicy: Never
+        image: ghcr.io/vandana0100/student-banking-app-studentportfolio:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
           name: http

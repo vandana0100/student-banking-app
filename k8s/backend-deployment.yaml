@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
       - name: backend
-        image: backend:latest
-        imagePullPolicy: Never
+        image: ghcr.io/vandana0100/student-banking-app-backend:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
           name: http
