@@ -1,0 +1,116 @@
+[2025-11-30 13:57:03] [INFO] === Validating Prerequisites ===
+[2025-11-30 13:57:03] [INFO] docker is installed: /usr/bin/docker
+[2025-11-30 13:57:03] [INFO] Docker version: Docker version 28.0.1, build 068a01e
+[2025-11-30 13:57:03] [INFO] docker-compose is installed: /usr/bin/docker-compose
+[2025-11-30 13:57:03] [INFO] Docker Compose version: Docker Compose version v2.33.1-desktop.1
+[2025-11-30 13:57:03] [INFO] Checking required ports availability...
+[2025-11-30 13:57:03] [INFO] Port 80 is available
+[2025-11-30 13:57:03] [INFO] Port 3000 is available
+[2025-11-30 13:57:03] [INFO] Port 5000 is available
+[2025-11-30 13:57:03] [SUCCESS] All prerequisites validated successfully
+[2025-11-30 13:57:03] [INFO] === Validating Deployment Directory ===
+[2025-11-30 13:57:03] [INFO] Current directory: /mnt/c/Users/Abc/OneDrive - Red River College Polytech/TERM 4/Developing in DevOps Environment/Module_5_Part3_U
+[2025-11-30 13:57:03] [SUCCESS] Docker Compose file found: docker-compose.yml
+[2025-11-30 13:57:03] [INFO] === Building and Deploying Services ===
+[2025-11-30 13:57:03] [INFO] Cleaning up existing containers (if any)...
+[2025-11-30 13:57:04] [INFO] Building Docker images...
+[2025-11-30 13:57:55] [SUCCESS] Docker images built successfully
+[2025-11-30 13:57:55] [INFO] Starting services with Docker Compose...
+[2025-11-30 13:58:39] [SUCCESS] Services started successfully
+[2025-11-30 13:58:39] [INFO] Waiting for services to initialize...
+[2025-11-30 13:58:44] [INFO] === Validating Built Images ===
+[2025-11-30 13:58:44] [INFO] Listing all Docker images:
+REPOSITORY                          TAG         IMAGE ID       CREATED              SIZE
+module_5_part3_u-backend            latest      300761968113   54 seconds ago       242MB
+module_5_part3_u-transactions       latest      405eab7bff60   About a minute ago   235MB
+module_5_part3_u-studentportfolio   latest      5c14de10a3df   About a minute ago   80MB
+postgres                            16-alpine   79c06d285ed9   2 weeks ago          394MB
+nginx                               alpine      b3c656d55d7a   4 weeks ago          79.8MB
+mongo                               6           0a83b2f824b2   2 months ago         1.05GB
+[2025-11-30 13:58:45] [WARNING] Image not found: backend
+[2025-11-30 13:58:45] [WARNING] Image not found: transactions
+[2025-11-30 13:58:46] [WARNING] Image not found: studentportfolio
+[2025-11-30 13:58:46] [SUCCESS] Image found: nginx:alpine
+[2025-11-30 13:58:47] [SUCCESS] Image found: mongo:6
+[2025-11-30 13:58:47] [WARNING] Some images may not be present: backend transactions studentportfolio
+[2025-11-30 13:58:47] [INFO] === Showing Running Containers ===
+[2025-11-30 13:58:47] [INFO] Docker containers status:
+CONTAINER ID   IMAGE                               COMMAND                  CREATED          STATUS                   PORTS                    NAMES
+83260ccf552e   nginx:alpine                        "/docker-entrypoint.…"   10 seconds ago   Up 8 seconds             0.0.0.0:80->80/tcp       module_5_part3_u-nginx-1
+525188498e89   module_5_part3_u-backend            "python app.py"          10 seconds ago   Up 8 seconds             0.0.0.0:5000->5000/tcp   module_5_part3_u-backend-1
+44a8496f45ca   module_5_part3_u-transactions       "docker-entrypoint.s…"   10 seconds ago   Up 8 seconds             0.0.0.0:3000->3000/tcp   module_5_part3_u-transactions-1
+784f309f5f2b   module_5_part3_u-studentportfolio   "/docker-entrypoint.…"   11 seconds ago   Up 9 seconds             80/tcp                   module_5_part3_u-studentportfolio-1
+640cee72ef6a   mongo:6                             "docker-entrypoint.s…"   11 seconds ago   Up 9 seconds             27017/tcp                module_5_part3_u-mongo-1
+76656d532ca9   postgres:16-alpine                  "docker-entrypoint.s…"   2 weeks ago      Up 4 minutes (healthy)   0.0.0.0:5432->5432/tcp   thoughtshare-db
+[2025-11-30 13:58:47] [SUCCESS] Nginx container ID: 83260ccf552e
+[2025-11-30 13:58:47] [INFO] === Performing Health Checks ===
+[2025-11-30 13:58:47] [INFO] Checking service health (timeout: 30s)...
+[2025-11-30 13:58:47] [INFO] Checking backend service at http://localhost:5000...
+[2025-11-30 13:58:47] [SUCCESS] Backend service is healthy
+[2025-11-30 13:58:47] [INFO] Checking transactions service at http://localhost:3000...
+[2025-11-30 13:59:18] [WARNING] Transactions service health check failed or timed out
+[2025-11-30 13:59:18] [INFO] Checking nginx service at http://localhost...
+[2025-11-30 13:59:18] [SUCCESS] Nginx service is healthy and page renders correctly
+[2025-11-30 13:59:18] [SUCCESS] All health checks passed
+[2025-11-30 13:59:18] [INFO] === Inspecting nginx:alpine Image ===
+[2025-11-30 13:59:18] [INFO] === Installing jq (if needed) ===
+[2025-11-30 13:59:18] [ERROR] jq is not installed or not in PATH
+[2025-11-30 13:59:18] [INFO] Installing jq...
+[2025-11-30 13:59:42] [INFO] jq is installed: /usr/bin/jq
+[2025-11-30 13:59:42] [SUCCESS] jq installed successfully
+[2025-11-30 13:59:42] [INFO] Running docker inspect on nginx:alpine...
+[2025-11-30 13:59:42] [SUCCESS] Docker inspect output saved to: nginx-logs.txt
+[2025-11-30 13:59:42] [INFO] === Extracting Key Information from nginx:alpine ===
+nginx:alpine
+2025-10-28T22:11:24.759850419Z
+linux
+{
+  "Hostname": "",
+  "Domainname": "",
+  "User": "",
+  "AttachStdin": false,
+  "AttachStdout": false,
+  "AttachStderr": false,
+  "ExposedPorts": {
+    "80/tcp": {}
+  },
+  "Tty": false,
+  "OpenStdin": false,
+  "StdinOnce": false,
+  "Env": [
+    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "NGINX_VERSION=1.29.3",
+    "PKG_RELEASE=1",
+    "DYNPKG_RELEASE=1",
+    "NJS_VERSION=0.9.4",
+    "NJS_RELEASE=1"
+  ],
+  "Cmd": [
+    "nginx",
+    "-g",
+    "daemon off;"
+  ],
+  "Image": "",
+  "Volumes": null,
+  "WorkingDir": "/",
+  "Entrypoint": [
+    "/docker-entrypoint.sh"
+  ],
+  "OnBuild": null,
+  "Labels": {
+    "maintainer": "NGINX Docker Maintainers <docker-maint@nginx.com>"
+  },
+  "StopSignal": "SIGQUIT"
+}
+{
+  "80/tcp": {}
+}
+[2025-11-30 13:59:44] [INFO] ==========================================
+[2025-11-30 13:59:44] [SUCCESS] Deployment completed successfully!
+[2025-11-30 13:59:44] [INFO] ==========================================
+[2025-11-30 13:59:44] [INFO] Application URL: http://localhost
+[2025-11-30 13:59:44] [INFO] Backend API: http://localhost:5000
+[2025-11-30 13:59:44] [INFO] Transactions API: http://localhost:3000
+[2025-11-30 13:59:44] [INFO] Log file: deployment.log
+[2025-11-30 13:59:44] [INFO] Nginx logs: nginx-logs.txt
+[2025-11-30 13:59:44] [INFO] ==========================================
