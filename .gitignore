@@ -5,3 +5,8 @@ venv/
 .DS_Store
 deployment.log
 nginx-logs.txt
+
+# Exclude CI-CD workflow folder
+.github/workflows/
+ci-cd/
+workflows/
