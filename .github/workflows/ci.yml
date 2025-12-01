@@ -1,25 +1,34 @@
-name: CI Pipeline  ## Workflow name shown in GitHub Actions UI
+name: CI/CD Pipeline
 
+# Trigger workflow on push to main branch or pull requests
 on:
   push:
     branches:
-      - main  ## Run on any push to main
+      - main
   pull_request:
     branches:
-      - main ## Run on PRs targeting main
+      - main
+
+# Environment variables used across jobs
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: vandana0100/student-banking-app
+  GITOPS_REPO: vandana0100/module_6_part3gitops
 
 jobs:
+  # JOB 1: Test Backend Service
+  # Purpose: Run automated tests to ensure code quality before building images
   test-backend:
-    runs-on: ubuntu-latest   ## Use GitHub's hosted Ubuntu runner
-
-    # Spin up a MongoDB sidecar container for the job (even though tests use mongomock).
+    runs-on: ubuntu-latest
+    
+    # Start MongoDB service container for testing
     services:
       mongo:
-        image: mongo:latest   ## Official MongoDB image
+        image: mongo:latest
         ports:
-          - 27017:27017  ## Publish container port 27017 to the runner's localhost:27017
+          - 27017:27017
         env:
-          MONGO_INITDB_ROOT_USERNAME: root  ## Create an admin user
+          MONGO_INITDB_ROOT_USERNAME: root
           MONGO_INITDB_ROOT_PASSWORD: example
         options: >-
           --health-cmd "mongosh --eval 'db.runCommand(\"ping\").ok'"
@@ -28,27 +37,175 @@ jobs:
           --health-retries 5
 
     steps:
+      # Step 1: Checkout source code from repository
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Step 2: Set up Python environment
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13.3' # Match the project's Python version
-          
+          python-version: '3.10'
+
+      # Step 3: Install Python dependencies
       - name: Install backend dependencies
         working-directory: ./backend
         run: |
+          pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest
 
-      # Connection string for a real MongoDB (service above).
-      # NOTE: your tests currently patch Mongo with mongomock in conftest.py,
-      # so this is mostly for parity/local runs and won't be used by the tests.
-      - name: Run backend tests  # All commands below run in ./backend
+      # Step 4: Run backend tests
+      - name: Run backend tests
         working-directory: ./backend
         env:
           MONGO_URI: "mongodb://root:example@localhost:27017/test_db?authSource=admin"
-          FLASK_ENV: "testing" # Put the app in testing mode if referenced by app code
-        run: pytest -q tests/  # Run all tests under backend/tests with quiet output
+          FLASK_ENV: "testing"
+        run: pytest -q tests/
 
+  # JOB 2: Build and Push Docker Images
+  # Purpose: Build Docker images for all services and push to GitHub Container Registry
+  build-and-push:
+    needs: test-backend  # Only run if tests pass
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'  # Only build on push, not on PR
+    
+    # Set permissions for GitHub token
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Step 1: Checkout source code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Docker Buildx for multi-platform builds
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Log in to GitHub Container Registry using CR_PAT secret
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+
+      # Step 4: Extract metadata (tags, labels) for Docker images
+      - name: Extract metadata for backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # Step 5: Build and push backend Docker image
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+
+      # Step 6: Extract metadata for transactions service
+      - name: Extract metadata for transactions
+        id: meta-transactions
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-transactions
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # Step 7: Build and push transactions Docker image
+      - name: Build and push transactions image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./transactions
+          file: ./transactions/Dockerfile
+          push: true
+          tags: ${{ steps.meta-transactions.outputs.tags }}
+          labels: ${{ steps.meta-transactions.outputs.labels }}
+
+      # Step 8: Extract metadata for studentportfolio
+      - name: Extract metadata for studentportfolio
+        id: meta-studentportfolio
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-studentportfolio
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # Step 9: Build and push studentportfolio Docker image
+      - name: Build and push studentportfolio image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./studentportfolio
+          file: ./studentportfolio/Dockerfile
+          push: true
+          tags: ${{ steps.meta-studentportfolio.outputs.tags }}
+          labels: ${{ steps.meta-studentportfolio.outputs.labels }}
+
+      # Step 10: Output image tags for next job
+      - name: Output image tags
+        run: |
+          echo "BACKEND_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend:latest" >> $GITHUB_ENV
+          echo "TRANSACTIONS_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-transactions:latest" >> $GITHUB_ENV
+          echo "STUDENTPORTFOLIO_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-studentportfolio:latest" >> $GITHUB_ENV
+
+  # JOB 3: Update GitOps Repository
+  # Purpose: Update Kubernetes manifests in GitOps repo with new image tags
+  update-gitops:
+    needs: build-and-push  # Only run after images are built and pushed
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'  # Only update on push, not on PR
+
+    steps:
+      # Step 1: Checkout the GitOps repository
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GITOPS_REPO }}
+          token: ${{ secrets.GITOPS_REPO }}
+          path: gitops
+
+      # Step 2: Update backend deployment with new image tag
+      - name: Update backend deployment image
+        run: |
+          sed -i "s|image: ghcr.io/vandana0100/student-banking-app-backend:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend:latest|g" \
+            gitops/k8s/backend-deployment.yaml
+
+      # Step 3: Update transactions deployment with new image tag
+      - name: Update transactions deployment image
+        run: |
+          sed -i "s|image: ghcr.io/vandana0100/student-banking-app-transactions:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-transactions:latest|g" \
+            gitops/k8s/transactions-deployment.yaml
+
+      # Step 4: Update studentportfolio deployment with new image tag
+      - name: Update studentportfolio deployment image
+        run: |
+          sed -i "s|image: ghcr.io/vandana0100/student-banking-app-studentportfolio:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-studentportfolio:latest|g" \
+            gitops/k8s/studentportfolio-deployment.yaml
+
+      # Step 5: Configure Git user for commits
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Step 6: Commit and push changes to GitOps repository
+      - name: Commit and push to GitOps repository
+        working-directory: gitops
+        run: |
+          git add k8s/*.yaml
+          git diff --staged --quiet || git commit -m "Update image tags from CI/CD pipeline [skip ci]"
+          git push
